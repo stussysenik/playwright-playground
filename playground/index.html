@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Playwright Playground</title>
+  <style>
+    :root {
+      --bg: #0f0f1a;
+      --surface: #1a1a2e;
+      --surface-2: #222240;
+      --border: #2d2d4a;
+      --text: #e0e0e0;
+      --text-muted: #9ca3af;
+      --purple: #a855f7;
+      --purple-dim: #7c3aed;
+      --purple-glow: rgba(168, 85, 247, 0.15);
+      --green: #22c55e;
+      --red: #ef4444;
+      --yellow: #eab308;
+      --blue: #3b82f6;
+      --cyan: #06b6d4;
+      --orange: #f97316;
+      --code-bg: #12121f;
+      --sidebar-w: 260px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; scroll-padding-top: 2rem; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      position: fixed; top: 0; left: 0;
+      width: var(--sidebar-w); height: 100vh;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 1.5rem 0;
+      z-index: 100;
+      overflow-y: auto;
+    }
+
+    .sidebar-logo {
+      padding: 0 1.5rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 1rem;
+    }
+
+    .sidebar-logo h2 {
+      font-size: 1.1rem;
+      color: var(--purple);
+      letter-spacing: -0.02em;
+    }
+
+    .sidebar-logo span {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: block;
+      margin-top: 0.25rem;
+    }
+
+    .sidebar nav { display: flex; flex-direction: column; gap: 2px; }
+
+    .sidebar nav a {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.6rem 1.5rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+      border-left: 3px solid transparent;
+    }
+
+    .sidebar nav a:hover { color: var(--text); background: var(--purple-glow); }
+
+    .sidebar nav a.active {
+      color: var(--purple);
+      background: var(--purple-glow);
+      border-left-color: var(--purple);
+    }
+
+    .sidebar nav a .nav-num {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 22px; height: 22px;
+      background: var(--surface-2);
+      border-radius: 6px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .sidebar nav a.active .nav-num {
+      background: var(--purple);
+      color: white;
+    }
+
+    /* Main */
+    .main {
+      margin-left: var(--sidebar-w);
+      padding: 3rem 3rem 6rem;
+      max-width: 1100px;
+    }
+
+    /* Hero */
+    .hero {
+      text-align: center;
+      padding: 3rem 0 4rem;
+    }
+
+    .hero h1 {
+      font-size: 2.8rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.75rem;
+      background: linear-gradient(135deg, var(--purple), #c084fc, var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero p {
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      max-width: 600px;
+      margin: 0 auto 2rem;
+    }
+
+    .hero-cmd {
+      display: inline-block;
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.75rem 1.5rem;
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 0.9rem;
+      color: var(--green);
+    }
+
+    .hero-cmd .dim { color: var(--text-muted); }
+
+    /* Section */
+    .section {
+      margin-bottom: 4rem;
+      scroll-margin-top: 2rem;
+    }
+
+    .section-header {
+      display: flex; align-items: center; gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 32px; height: 32px;
+      background: var(--purple);
+      border-radius: 8px;
+      font-weight: 800;
+      font-size: 0.85rem;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .section h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .section-desc {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      font-size: 0.95rem;
+    }
+
+    /* Two-column layout */
+    .columns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .col-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    /* Demo panel */
+    .demo-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+    }
+
+    /* Code panel */
+    .code-panel {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      overflow-x: auto;
+    }
+
+    .code-panel pre {
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 0.8rem;
+      line-height: 1.7;
+      white-space: pre;
+      color: var(--text);
+    }
+
+    /* Syntax highlighting classes */
+    .hl-kw { color: #c084fc; }
+    .hl-str { color: #86efac; }
+    .hl-cmt { color: #6b7280; font-style: italic; }
+    .hl-fn { color: #93c5fd; }
+    .hl-num { color: #fbbf24; }
+
+    /* Callout */
+    .callout {
+      background: rgba(239, 68, 68, 0.08);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      margin-top: 1rem;
+    }
+
+    .callout-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--red);
+      margin-bottom: 0.35rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .callout p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* Form elements */
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.5rem 0.75rem;
+      color: var(--text);
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus { border-color: var(--purple); }
+
+    input:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    button {
+      background: var(--purple);
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-weight: 600;
+    }
+
+    button:hover { background: var(--purple-dim); }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .status {
+      font-size: 0.8rem;
+      margin-top: 0.5rem;
+      min-height: 1.4rem;
+      color: var(--green);
+    }
+
+    .status.error { color: var(--red); }
+
+    label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+
+    /* User list */
+    .user-list {
+      list-style: none;
+      margin-top: 0.5rem;
+    }
+
+    .user-list li {
+      padding: 0.35rem 0.5rem;
+      background: var(--surface-2);
+      border-radius: 6px;
+      margin-bottom: 0.35rem;
+      font-size: 0.85rem;
+    }
+
+    /* Geolocation info */
+    .info-grid {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.25rem 0.75rem;
+      font-size: 0.85rem;
+    }
+
+    .info-label { color: var(--text-muted); }
+    .info-value { color: var(--text); font-family: monospace; }
+
+    /* Trace timeline */
+    .timeline {
+      display: flex;
+      gap: 0;
+      align-items: stretch;
+      margin-top: 0.75rem;
+    }
+
+    .timeline-step {
+      flex: 1;
+      background: var(--surface-2);
+      padding: 0.75rem 0.5rem;
+      text-align: center;
+      font-size: 0.75rem;
+      border-right: 1px solid var(--border);
+      position: relative;
+    }
+
+    .timeline-step:first-child { border-radius: 8px 0 0 8px; }
+    .timeline-step:last-child { border-radius: 0 8px 8px 0; border-right: none; }
+
+    .timeline-step .step-icon {
+      font-size: 1.2rem;
+      margin-bottom: 0.25rem;
+      display: block;
+    }
+
+    .timeline-step .step-label {
+      color: var(--text-muted);
+      display: block;
+    }
+
+    .timeline-step::after {
+      content: '';
+      position: absolute;
+      right: -6px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 0;
+      height: 0;
+      border-top: 6px solid transparent;
+      border-bottom: 6px solid transparent;
+      border-left: 6px solid var(--surface-2);
+      z-index: 1;
+    }
+
+    .timeline-step:last-child::after { display: none; }
+
+    /* Delayed demo */
+    .delayed-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .delayed-row button { flex-shrink: 0; }
+
+    .delayed-result {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      min-height: 1.4rem;
+    }
+
+    #delayed-element {
+      display: none;
+      background: var(--green);
+      color: #0f0f1a;
+      padding: 0.35rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    #delayed-element.visible { display: inline-block; }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; padding: 2rem 1.5rem; }
+      .columns { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 2rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <h2>Playwright Playground</h2>
+      <span>Things Cypress can't do</span>
+    </div>
+    <nav>
+      <a href="#contexts"><span class="nav-num">1</span> Browser Contexts</a>
+      <a href="#multi-page"><span class="nav-num">2</span> Multi-Page</a>
+      <a href="#network"><span class="nav-num">3</span> Network Routing</a>
+      <a href="#auto-wait"><span class="nav-num">4</span> Auto-Waiting</a>
+      <a href="#emulation"><span class="nav-num">5</span> Emulation</a>
+      <a href="#tracing"><span class="nav-num">6</span> Tracing</a>
+    </nav>
+  </aside>
+
+  <!-- Main content -->
+  <div class="main">
+
+    <!-- Hero -->
+    <section class="hero">
+      <h1>Playwright Playground</h1>
+      <p>An interactive showcase of 6 features that make Playwright uniquely powerful — features Cypress simply cannot do.</p>
+      <div class="hero-cmd">
+        <span class="dim">$</span> npx playwright test --headed
+      </div>
+    </section>
+
+    <!-- 1. Browser Contexts -->
+    <section class="section" id="contexts">
+      <div class="section-header">
+        <span class="badge">1</span>
+        <h2>Browser Contexts — Isolated Parallel Sessions</h2>
+      </div>
+      <p class="section-desc">Create multiple isolated browser contexts in a single test. Each has its own cookies, localStorage, and session state — perfect for testing multi-user scenarios simultaneously.</p>
+
+      <div class="columns">
+        <div>
+          <div class="col-label">Interactive Demo</div>
+          <div class="demo-panel">
+            <label for="ctx-username">Username</label>
+            <input type="text" id="ctx-username" placeholder="Enter username...">
+            <label for="ctx-password">Password</label>
+            <input type="password" id="ctx-password" placeholder="Enter password...">
+            <button id="ctx-login">Log In</button>
+            <button id="ctx-logout" style="background: var(--surface-2); display: none;">Log Out</button>
+            <div class="status" id="ctx-status"></div>
+          </div>
+        </div>
+        <div>
+          <div class="col-label">Playwright Test</div>
+          <div class="code-panel">
+            <pre><span class="hl-cmt">// Two users, same test, fully isolated</span>
+<span class="hl-kw">const</span> alice = <span class="hl-kw">await</span> browser.<span class="hl-fn">newContext</span>();
+<span class="hl-kw">const</span> bob = <span class="hl-kw">await</span> browser.<span class="hl-fn">newContext</span>();
+
+<span class="hl-kw">const</span> pageA = <span class="hl-kw">await</span> alice.<span class="hl-fn">newPage</span>();
+<span class="hl-kw">const</span> pageB = <span class="hl-kw">await</span> bob.<span class="hl-fn">newPage</span>();
+
+<span class="hl-cmt">// Login as Alice</span>
+<span class="hl-kw">await</span> pageA.<span class="hl-fn">fill</span>(<span class="hl-str">'#ctx-username'</span>, <span class="hl-str">'alice'</span>);
+<span class="hl-kw">await</span> pageA.<span class="hl-fn">fill</span>(<span class="hl-str">'#ctx-password'</span>, <span class="hl-str">'pass123'</span>);
+<span class="hl-kw">await</span> pageA.<span class="hl-fn">click</span>(<span class="hl-str">'#ctx-login'</span>);
+
+<span class="hl-cmt">// Login as Bob (different context!)</span>
+<span class="hl-kw">await</span> pageB.<span class="hl-fn">fill</span>(<span class="hl-str">'#ctx-username'</span>, <span class="hl-str">'bob'</span>);
+<span class="hl-kw">await</span> pageB.<span class="hl-fn">fill</span>(<span class="hl-str">'#ctx-password'</span>, <span class="hl-str">'pass456'</span>);
+<span class="hl-kw">await</span> pageB.<span class="hl-fn">click</span>(<span class="hl-str">'#ctx-login'</span>);
+
+<span class="hl-cmt">// Verify isolation — each sees their own user</span>
+<span class="hl-kw">await</span> <span class="hl-fn">expect</span>(pageA.<span class="hl-fn">locator</span>(<span class="hl-str">'#ctx-status'</span>))
+  .<span class="hl-fn">toContainText</span>(<span class="hl-str">'alice'</span>);
+<span class="hl-kw">await</span> <span class="hl-fn">expect</span>(pageB.<span class="hl-fn">locator</span>(<span class="hl-str">'#ctx-status'</span>))
+  .<span class="hl-fn">toContainText</span>(<span class="hl-str">'bob'</span>);</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <div class="callout-title">Why not Cypress?</div>
+        <p>Cypress runs inside a single browser — there's no concept of browser contexts. You cannot test two users simultaneously or verify session isolation in a single test. You'd need separate test files and can't compare state side by side.</p>
+      </div>
+    </section>
+
+    <!-- 2. Multi-Page -->
+    <section class="section" id="multi-page">
+      <div class="section-header">
+        <span class="badge">2</span>
+        <h2>Multi-Page — Tabs & Popups</h2>
+      </div>
+      <p class="section-desc">Playwright can handle popups, new tabs, and cross-page communication. Click the link below — it opens a real popup that sends a message back.</p>
+
+      <div class="columns">
+        <div>
+          <div class="col-label">Interactive Demo</div>
+          <div class="demo-panel">
+            <p style="margin-bottom: 0.75rem; font-size: 0.9rem;">Click to open a popup window:</p>
+            <a href="#" id="popup-link" style="color: var(--purple); font-weight: 600; text-decoration: underline; font-size: 0.95rem;">Open Popup Window</a>
+            <div class="status" id="popup-status" style="margin-top: 0.75rem;"></div>
+          </div>
+        </div>
+        <div>
+          <div class="col-label">Playwright Test</div>
+          <div class="code-panel">
+            <pre><span class="hl-cmt">// Capture the popup when it opens</span>
+<span class="hl-kw">const</span> [popup] = <span class="hl-kw">await</span> Promise.<span class="hl-fn">all</span>([
+  page.<span class="hl-fn">waitForEvent</span>(<span class="hl-str">'popup'</span>),
+  page.<span class="hl-fn">click</span>(<span class="hl-str">'#popup-link'</span>),
+]);
+
+<span class="hl-cmt">// Interact with the popup</span>
+<span class="hl-kw">await</span> <span class="hl-fn">expect</span>(popup)
+  .<span class="hl-fn">toHaveTitle</span>(<span class="hl-str">'Popup Window'</span>);
+
+<span class="hl-cmt">// Click button in popup</span>
+<span class="hl-kw">await</span> popup.<span class="hl-fn">click</span>(<span class="hl-str">'#sendMessage'</span>);
+
+<span class="hl-cmt">// Verify parent received the message</span>
+<span class="hl-kw">await</span> <span class="hl-fn">expect</span>(page.<span class="hl-fn">locator</span>(<span class="hl-str">'#popup-status'</span>))
+  .<span class="hl-fn">toContainText</span>(<span class="hl-str">'Hello from popup!'</span>);</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <div class="callout-title">Why not Cypress?</div>
+        <p>Cypress automatically strips <code>target="_blank"</code> and cannot handle popups or new tabs at all. It's architecturally limited to a single page — there's no API to capture or interact with a second tab.</p>
+      </div>
+    </section>
+
+    <!-- 3. Network Routing -->
+    <section class="section" id="network">
+      <div class="section-header">
+        <span class="badge">3</span>
+        <h2>Network Routing — Intercept, Mock, Modify</h2>
+      </div>
+      <p class="section-desc">Playwright's <code>page.route()</code> gives you full control over network requests: mock responses, modify request headers, and even abort requests entirely.</p>
+
+      <div class="columns">
+        <div>
+          <div class="col-label">Interactive Demo</div>
+          <div class="demo-panel">
+            <button id="load-users">Load Users</button>
+            <button id="clear-users" style="background: var(--surface-2);">Clear</button>
+            <div class="status" id="users-status"></div>
+            <ul class="user-list" id="users-list"></ul>
+          </div>
+        </div>
+        <div>
+          <div class="col-label">Playwright Test</div>
+          <div class="code-panel">
+            <pre><span class="hl-cmt">// Mock the API response</span>
+<span class="hl-kw">await</span> page.<span class="hl-fn">route</span>(<span class="hl-str">'**/api/users'</span>, <span class="hl-kw">async</span> route =&gt; {
+  <span class="hl-kw">await</span> route.<span class="hl-fn">fulfill</span>({
+    contentType: <span class="hl-str">'application/json'</span>,
+    body: JSON.<span class="hl-fn">stringify</span>([
+      { name: <span class="hl-str">'Ada Lovelace'</span>, role: <span class="hl-str">'Engineer'</span> },
+      { name: <span class="hl-str">'Grace Hopper'</span>, role: <span class="hl-str">'Admiral'</span> },
+    ]),
+  });
+});
+
+<span class="hl-kw">await</span> page.<span class="hl-fn">click</span>(<span class="hl-str">'#load-users'</span>);
+
+<span class="hl-cmt">// Verify mocked data rendered</span>
+<span class="hl-kw">await</span> <span class="hl-fn">expect</span>(page.<span class="hl-fn">locator</span>(<span class="hl-str">'#users-list li'</span>))
+  .<span class="hl-fn">toHaveCount</span>(<span class="hl-num">2</span>);
+
+<span class="hl-cmt">// Modify request headers</span>
+<span class="hl-kw">await</span> page.<span class="hl-fn">route</span>(<span class="hl-str">'**/*'</span>, <span class="hl-kw">async</span> route =&gt; {
+  <span class="hl-kw">await</span> route.<span class="hl-fn">continue</span>({
+    headers: { ...route.<span class="hl-fn">request</span>().headers(),
+      <span class="hl-str">'X-Custom'</span>: <span class="hl-str">'injected'</span> }
+  });
+});
+
+<span class="hl-cmt">// Abort image requests</span>
+<span class="hl-kw">await</span> page.<span class="hl-fn">route</span>(<span class="hl-str">'**/*.png'</span>, route =&gt;
+  route.<span class="hl-fn">abort</span>()
+);</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <div class="callout-title">Why not Cypress?</div>
+        <p>Cypress's <code>cy.intercept</code> cannot modify outgoing request headers or request bodies before they're sent. It also cannot abort requests or do HAR-based replay. Playwright gives you full bidirectional control.</p>
+      </div>
+    </section>
+
+    <!-- 4. Auto-Waiting -->
+    <section class="section" id="auto-wait">
+      <div class="section-header">
+        <span class="badge">4</span>
+        <h2>Auto-Waiting — Actionability Checks</h2>
+      </div>
+      <p class="section-desc">Playwright automatically waits for elements to be visible, enabled, and stable before acting on them. No <code>cy.wait()</code>, no <code>sleep()</code>, no flaky retry wrappers.</p>
+
+      <div class="columns">
+        <div>
+          <div class="col-label">Interactive Demo</div>
+          <div class="demo-panel">
+            <div class="delayed-row">
+              <button id="show-delayed">Show Element (2s delay)</button>
+              <div id="delayed-element">I appeared!</div>
+            </div>
+            <div class="delayed-row">
+              <button id="enable-input-btn">Enable Input (1.5s delay)</button>
+              <input type="text" id="delayed-input" placeholder="I'm disabled..." disabled>
+            </div>
+            <div class="delayed-row">
+              <button id="update-text-btn">Update Text (1s delay)</button>
+              <span class="delayed-result" id="delayed-text">Waiting...</span>
+            </div>
+            <button id="reset-delayed" style="background: var(--surface-2); margin-top: 0.5rem;">Reset All</button>
+          </div>
+        </div>
+        <div>
+          <div class="col-label">Playwright Test</div>
+          <div class="code-panel">
+            <pre><span class="hl-cmt">// Element appears after 2s — no waitFor needed</span>
+<span class="hl-kw">await</span> page.<span class="hl-fn">click</span>(<span class="hl-str">'#show-delayed'</span>);
+<span class="hl-kw">await</span> <span class="hl-fn">expect</span>(page.<span class="hl-fn">locator</span>(<span class="hl-str">'#delayed-element'</span>))
+  .<span class="hl-fn">toBeVisible</span>();
+
+<span class="hl-cmt">// Input enables after 1.5s — auto-waits</span>
+<span class="hl-kw">await</span> page.<span class="hl-fn">click</span>(<span class="hl-str">'#enable-input-btn'</span>);
+<span class="hl-kw">await</span> page.<span class="hl-fn">fill</span>(<span class="hl-str">'#delayed-input'</span>, <span class="hl-str">'typed!'</span>);
+
+<span class="hl-cmt">// Text updates after 1s — assertion auto-retries</span>
+<span class="hl-kw">await</span> page.<span class="hl-fn">click</span>(<span class="hl-str">'#update-text-btn'</span>);
+<span class="hl-kw">await</span> <span class="hl-fn">expect</span>(page.<span class="hl-fn">locator</span>(<span class="hl-str">'#delayed-text'</span>))
+  .<span class="hl-fn">toHaveText</span>(<span class="hl-str">'Updated!'</span>);
+
+<span class="hl-cmt">// Zero sleep calls. Zero flake.</span></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <div class="callout-title">Why not Cypress?</div>
+        <p>Cypress retries assertions but doesn't auto-wait for actionability on <code>.type()</code> or <code>.click()</code>. If an element is disabled or not yet visible, you often need explicit <code>cy.wait()</code> or custom retry logic. Playwright's actionability checks are built into every action.</p>
+      </div>
+    </section>
+
+    <!-- 5. Emulation -->
+    <section class="section" id="emulation">
+      <div class="section-header">
+        <span class="badge">5</span>
+        <h2>Device Emulation — Mobile, Geo, Permissions</h2>
+      </div>
+      <p class="section-desc">Playwright provides built-in device presets, geolocation overrides, permission grants, and full user agent spoofing — all configured per-context.</p>
+
+      <div class="columns">
+        <div>
+          <div class="col-label">Interactive Demo</div>
+          <div class="demo-panel">
+            <div class="info-grid">
+              <span class="info-label">Viewport:</span>
+              <span class="info-value" id="emu-viewport">—</span>
+              <span class="info-label">User Agent:</span>
+              <span class="info-value" id="emu-ua" style="word-break: break-all;">—</span>
+              <span class="info-label">Color Scheme:</span>
+              <span class="info-value" id="emu-scheme">—</span>
+              <span class="info-label">Geolocation:</span>
+              <span class="info-value" id="emu-geo">—</span>
+            </div>
+            <button id="emu-geo-btn" style="margin-top: 0.75rem;">Get Location</button>
+          </div>
+        </div>
+        <div>
+          <div class="col-label">Playwright Test</div>
+          <div class="code-panel">
+            <pre><span class="hl-kw">import</span> { devices } <span class="hl-kw">from</span> <span class="hl-str">'@playwright/test'</span>;
+
+<span class="hl-kw">const</span> iPhone = devices[<span class="hl-str">'iPhone 14 Pro'</span>];
+
+<span class="hl-kw">const</span> context = <span class="hl-kw">await</span> browser.<span class="hl-fn">newContext</span>({
+  ...iPhone,
+  locale: <span class="hl-str">'en-US'</span>,
+  geolocation: {
+    latitude: <span class="hl-num">37.7749</span>,
+    longitude: <span class="hl-num">-122.4194</span>,
+  },
+  permissions: [<span class="hl-str">'geolocation'</span>],
+  colorScheme: <span class="hl-str">'dark'</span>,
+});
+
+<span class="hl-kw">const</span> page = <span class="hl-kw">await</span> context.<span class="hl-fn">newPage</span>();
+<span class="hl-kw">await</span> page.<span class="hl-fn">goto</span>(<span class="hl-str">'/'</span>);
+
+<span class="hl-cmt">// Viewport matches iPhone 14 Pro</span>
+<span class="hl-kw">const</span> vp = page.<span class="hl-fn">viewportSize</span>();
+<span class="hl-fn">expect</span>(vp.width).<span class="hl-fn">toBe</span>(<span class="hl-num">393</span>);
+
+<span class="hl-cmt">// Geolocation was granted</span>
+<span class="hl-kw">await</span> page.<span class="hl-fn">click</span>(<span class="hl-str">'#emu-geo-btn'</span>);
+<span class="hl-kw">await</span> <span class="hl-fn">expect</span>(page.<span class="hl-fn">locator</span>(<span class="hl-str">'#emu-geo'</span>))
+  .<span class="hl-fn">toContainText</span>(<span class="hl-str">'37.77'</span>);</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <div class="callout-title">Why not Cypress?</div>
+        <p>Cypress offers basic <code>cy.viewport()</code> but has no geolocation override, no permission grants, no user agent spoofing, and no device presets. Testing mobile experiences or location-based features requires workarounds or plugins.</p>
+      </div>
+    </section>
+
+    <!-- 6. Tracing -->
+    <section class="section" id="tracing">
+      <div class="section-header">
+        <span class="badge">6</span>
+        <h2>Tracing — Time-Travel Debugging</h2>
+      </div>
+      <p class="section-desc">Playwright's trace viewer captures DOM snapshots, screenshots, network activity, and console logs at every step — giving you time-travel debugging for any test failure.</p>
+
+      <div class="columns">
+        <div>
+          <div class="col-label">What a Trace Captures</div>
+          <div class="demo-panel">
+            <div class="timeline">
+              <div class="timeline-step">
+                <span class="step-icon">&#128248;</span>
+                <span class="step-label">Screenshots</span>
+              </div>
+              <div class="timeline-step">
+                <span class="step-icon">&#128444;</span>
+                <span class="step-label">DOM Snapshots</span>
+              </div>
+              <div class="timeline-step">
+                <span class="step-icon">&#127760;</span>
+                <span class="step-label">Network</span>
+              </div>
+              <div class="timeline-step">
+                <span class="step-icon">&#128187;</span>
+                <span class="step-label">Console</span>
+              </div>
+              <div class="timeline-step">
+                <span class="step-icon">&#128196;</span>
+                <span class="step-label">Source</span>
+              </div>
+            </div>
+            <p style="margin-top: 0.75rem; font-size: 0.8rem; color: var(--text-muted);">
+              View with: <code style="color: var(--green);">npx playwright show-trace trace.zip</code>
+            </p>
+          </div>
+        </div>
+        <div>
+          <div class="col-label">Playwright Test</div>
+          <div class="code-panel">
+            <pre><span class="hl-cmt">// Start tracing before actions</span>
+<span class="hl-kw">await</span> context.tracing.<span class="hl-fn">start</span>({
+  screenshots: <span class="hl-num">true</span>,
+  snapshots: <span class="hl-num">true</span>,
+  sources: <span class="hl-num">true</span>,
+});
+
+<span class="hl-cmt">// ... perform test actions ...</span>
+<span class="hl-kw">await</span> page.<span class="hl-fn">goto</span>(<span class="hl-str">'/'</span>);
+<span class="hl-kw">await</span> page.<span class="hl-fn">click</span>(<span class="hl-str">'#ctx-login'</span>);
+<span class="hl-kw">await</span> page.<span class="hl-fn">fill</span>(<span class="hl-str">'#ctx-username'</span>, <span class="hl-str">'trace-user'</span>);
+
+<span class="hl-cmt">// Stop and save the trace</span>
+<span class="hl-kw">await</span> context.tracing.<span class="hl-fn">stop</span>({
+  path: <span class="hl-str">'test-results/trace.zip'</span>,
+});
+
+<span class="hl-cmt">// Open: npx playwright show-trace trace.zip</span>
+<span class="hl-cmt">// See DOM, network, console at every step</span></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <div class="callout-title">Why not Cypress?</div>
+        <p>Cypress captures screenshots and video, but has no interactive trace viewer. You can't inspect DOM state, network requests, or console logs at each individual step. Playwright's trace viewer gives you a full time-travel debugging experience.</p>
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    // === Sidebar active state via IntersectionObserver ===
+    const sections = document.querySelectorAll('.section');
+    const navLinks = document.querySelectorAll('.sidebar nav a');
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          navLinks.forEach(link => link.classList.remove('active'));
+          const active = document.querySelector(`.sidebar nav a[href="#${entry.target.id}"]`);
+          if (active) active.classList.add('active');
+        }
+      });
+    }, { rootMargin: '-20% 0px -70% 0px' });
+
+    sections.forEach(s => observer.observe(s));
+
+    // === 1. Browser Contexts — Login demo ===
+    const ctxLogin = document.getElementById('ctx-login');
+    const ctxLogout = document.getElementById('ctx-logout');
+    const ctxStatus = document.getElementById('ctx-status');
+    const ctxUsername = document.getElementById('ctx-username');
+    const ctxPassword = document.getElementById('ctx-password');
+
+    ctxLogin.addEventListener('click', () => {
+      const user = ctxUsername.value.trim();
+      const pass = ctxPassword.value.trim();
+      if (!user || !pass) {
+        ctxStatus.textContent = 'Please enter username and password.';
+        ctxStatus.className = 'status error';
+        return;
+      }
+      localStorage.setItem('playground-user', user);
+      ctxStatus.textContent = `Logged in as ${user}`;
+      ctxStatus.className = 'status';
+      ctxLogin.style.display = 'none';
+      ctxLogout.style.display = 'inline-block';
+    });
+
+    ctxLogout.addEventListener('click', () => {
+      localStorage.removeItem('playground-user');
+      ctxStatus.textContent = '';
+      ctxUsername.value = '';
+      ctxPassword.value = '';
+      ctxLogin.style.display = 'inline-block';
+      ctxLogout.style.display = 'none';
+    });
+
+    // Restore session on load
+    const savedUser = localStorage.getItem('playground-user');
+    if (savedUser) {
+      ctxStatus.textContent = `Logged in as ${savedUser}`;
+      ctxLogin.style.display = 'none';
+      ctxLogout.style.display = 'inline-block';
+    }
+
+    // === 2. Multi-Page — Popup link opens via window.open ===
+    document.getElementById('popup-link').addEventListener('click', (e) => {
+      e.preventDefault();
+      window.open('popup.html', '_blank', 'width=500,height=400');
+    });
+
+    window.addEventListener('message', (e) => {
+      if (e.data && e.data.type === 'popup-message') {
+        document.getElementById('popup-status').textContent = `Received: ${e.data.text}`;
+      }
+    });
+
+    // === 3. Network — Load users ===
+    const loadUsersBtn = document.getElementById('load-users');
+    const clearUsersBtn = document.getElementById('clear-users');
+    const usersList = document.getElementById('users-list');
+    const usersStatus = document.getElementById('users-status');
+
+    loadUsersBtn.addEventListener('click', async () => {
+      usersStatus.textContent = 'Loading...';
+      usersStatus.className = 'status';
+      usersList.innerHTML = '';
+      try {
+        const res = await fetch('/api/users');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        data.forEach(user => {
+          const li = document.createElement('li');
+          li.textContent = `${user.name} — ${user.role}`;
+          usersList.appendChild(li);
+        });
+        usersStatus.textContent = `Loaded ${data.length} users`;
+      } catch (err) {
+        usersStatus.textContent = `Error: ${err.message}`;
+        usersStatus.className = 'status error';
+      }
+    });
+
+    clearUsersBtn.addEventListener('click', () => {
+      usersList.innerHTML = '';
+      usersStatus.textContent = '';
+    });
+
+    // === 4. Auto-Waiting — Delayed actions ===
+    document.getElementById('show-delayed').addEventListener('click', () => {
+      setTimeout(() => {
+        document.getElementById('delayed-element').classList.add('visible');
+      }, 2000);
+    });
+
+    document.getElementById('enable-input-btn').addEventListener('click', () => {
+      setTimeout(() => {
+        document.getElementById('delayed-input').disabled = false;
+        document.getElementById('delayed-input').placeholder = 'Now I\'m enabled!';
+      }, 1500);
+    });
+
+    document.getElementById('update-text-btn').addEventListener('click', () => {
+      setTimeout(() => {
+        document.getElementById('delayed-text').textContent = 'Updated!';
+      }, 1000);
+    });
+
+    document.getElementById('reset-delayed').addEventListener('click', () => {
+      document.getElementById('delayed-element').classList.remove('visible');
+      document.getElementById('delayed-input').disabled = true;
+      document.getElementById('delayed-input').value = '';
+      document.getElementById('delayed-input').placeholder = 'I\'m disabled...';
+      document.getElementById('delayed-text').textContent = 'Waiting...';
+    });
+
+    // === 5. Emulation — Display info ===
+    function updateEmulationInfo() {
+      document.getElementById('emu-viewport').textContent =
+        `${window.innerWidth} x ${window.innerHeight}`;
+
+      const ua = navigator.userAgent;
+      document.getElementById('emu-ua').textContent =
+        ua.length > 80 ? ua.substring(0, 80) + '...' : ua;
+
+      const scheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.getElementById('emu-scheme').textContent = scheme;
+    }
+
+    updateEmulationInfo();
+    window.addEventListener('resize', updateEmulationInfo);
+
+    document.getElementById('emu-geo-btn').addEventListener('click', () => {
+      const geoEl = document.getElementById('emu-geo');
+      if (!navigator.geolocation) {
+        geoEl.textContent = 'Geolocation not supported';
+        return;
+      }
+      geoEl.textContent = 'Requesting...';
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          geoEl.textContent = `${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`;
+        },
+        (err) => {
+          geoEl.textContent = `Error: ${err.message}`;
+        }
+      );
+    });
+  </script>
+</body>
+</html>

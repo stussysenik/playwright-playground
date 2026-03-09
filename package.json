@@ -1,0 +1,16 @@
+{
+  "name": "playwright-playground",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "npx serve playground -p 3333",
+    "test": "npx playwright test",
+    "test:headed": "npx playwright test --headed",
+    "test:ui": "npx playwright test --ui",
+    "trace": "npx playwright show-trace"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.50.0",
+    "serve": "^14.2.0"
+  }
+}

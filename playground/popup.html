@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Popup Window</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e; color: #e0e0e0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-height: 100vh; padding: 2rem;
+    }
+    h1 { color: #a855f7; margin-bottom: 1rem; }
+    p { margin-bottom: 1.5rem; color: #9ca3af; }
+    button {
+      background: #a855f7; color: white; border: none; padding: 0.75rem 1.5rem;
+      border-radius: 8px; font-size: 1rem; cursor: pointer; transition: background 0.2s;
+    }
+    button:hover { background: #9333ea; }
+    #status { margin-top: 1rem; color: #22c55e; min-height: 1.5rem; }
+  </style>
+</head>
+<body>
+  <h1>Popup Page</h1>
+  <p>This page was opened in a new tab/popup.</p>
+  <button id="sendMessage">Send Message to Parent</button>
+  <div id="status"></div>
+  <script>
+    document.getElementById('sendMessage').addEventListener('click', () => {
+      if (window.opener) {
+        window.opener.postMessage({ type: 'popup-message', text: 'Hello from popup!' }, '*');
+        document.getElementById('status').textContent = 'Message sent to parent!';
+      } else {
+        document.getElementById('status').textContent = 'No parent window found.';
+      }
+    });
+  </script>
+</body>
+</html>
