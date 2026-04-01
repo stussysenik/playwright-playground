@@ -1,5 +1,8 @@
 # Playwright Playground
 
+![Demo](demo.gif)
+
+
 A hands-on exploration of [Playwright](https://playwright.dev/) — browser automation, testing, network interception, tracing, and more.
 
 ## Setup
